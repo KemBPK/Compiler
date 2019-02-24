@@ -1,0 +1,363 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Linq;
+
+namespace CompilerLib.LexicalAnalyzer
+{
+    //Container that contains the content of the text file (either in one string or in lines)
+    //Go on character at a time and check if the token (character input) is valid in the FSM. If not, keeping reading in more characters.
+    //While reading the characters and checkign for valid tokens, add the valid token into another separate container (record)
+    //Do this until you hit the end of the string input. Then go through the record container and output the token and lexeme
+
+    public class LexicalAnalyzer
+    {
+        public LexicalAnalyzer(string i)
+        {
+            Records = new List<Record>();
+            Input = i;
+            FSM = new FSM();
+            Run();
+            foreach (var record in Records)
+            {
+                Console.WriteLine(record.Token + ": " + record.Lexeme);
+            }
+        }
+
+        private void Run()
+        {
+            if (Input != null)
+            {
+                Input = Input.Replace("\r\n", " ");
+                string Buffer = "";
+                for (int i = 0; i < Input.Length; ++i)
+                {
+                    //Skips comment
+                    if (Input[i] == '!') i = GetClosingCommentIndex(i) + 1;
+
+                    //if State is identifier or integer or real, add to buffer 
+                    var test = Input[i];
+
+                    FSM.Lexer(Input[i]);
+                    if (FSM.CurrentState == State.integer || 
+                        FSM.CurrentState == State.identifier ||
+                        FSM.CurrentState == State.real || 
+                        FSM.CurrentState == State.end_separator || 
+                        FSM.CurrentState == State._operator || 
+                        FSM.CurrentState == State.brace || FSM.CurrentState == State.parenthesis || FSM.CurrentState == State.bracket ||
+                        FSM.CurrentState == State.end_brace || FSM.CurrentState == State.end_parenthesis || FSM.CurrentState == State.end_bracket)
+                    {
+                        Buffer += Input[i];
+                    }
+                    if (FSM.IsEndingState())
+                    {
+                        if (!Buffer.Equals(""))
+                        {
+                            if (FSM.CurrentState == State.end_identifier)
+                            {
+                                //Search for keywords
+                                //if not, then the buffer string is an identifier
+                                //add record
+                                if (IsKeyWord(Buffer))
+                                {
+                                    Records.Add(new Record { Token = Token.keyword, Lexeme = Buffer });
+                                }
+                                else
+                                {
+                                    Records.Add(new Record { Token = Token.identifier, Lexeme = Buffer });
+                                }
+                            }
+                            else if (FSM.CurrentState == State.end_integer)
+                            {
+                                Records.Add(new Record { Token = Token.integer, Lexeme = Buffer });
+                            }
+                            else if (FSM.CurrentState == State.end_real)
+                            {
+                                Records.Add(new Record { Token = Token.realnumber, Lexeme = Buffer });
+                            }
+                            else if (FSM.CurrentState == State.end_separator)
+                            {
+                                Records.Add(new Record { Token = Token.separator, Lexeme = Buffer });
+                            }
+                            else if (FSM.CurrentState == State._operator)
+                            {
+                                Records.Add(new Record { Token = Token._operator, Lexeme = Buffer });
+                            }
+                            else if (FSM.CurrentState == State.end_brace)
+                            {
+                                //Records.Add(new Record { Token = Token.separator, Lexeme = Buffer });
+                                Records.Add(new Record { Token = Token.separator, Lexeme = "{" });
+                                //call run again but without brackets
+                                if (Buffer.Length > 2)
+                                {
+                                    string tempInput = Input;
+                                    var tempCurrentState = FSM.CurrentState;
+                                    var tempFormerState = FSM.FormerState;
+                                    string substring = Buffer.Substring(1, Buffer.Length - 2) + ' '; //puts a separator if nothing is between the char and )
+                                    Input = substring;
+                                    FSM.CurrentState = State.start;
+                                    FSM.FormerState = State.start;
+                                    Run();
+                                    Input = tempInput;
+                                    FSM.CurrentState = tempCurrentState;
+                                    FSM.FormerState = tempFormerState;
+                                }
+                                Records.Add(new Record { Token = Token.separator, Lexeme = "}" });
+                            }
+                            else if (FSM.CurrentState == State.end_parenthesis)
+                            {
+                                //Records.Add(new Record { Token = Token.separator, Lexeme = Buffer });
+                                Records.Add(new Record { Token = Token.separator, Lexeme = "(" });
+                                if (Buffer.Length > 2)
+                                {
+                                    string tempInput = Input;
+                                    var tempCurrentState = FSM.CurrentState;
+                                    var tempFormerState = FSM.FormerState;
+                                    string substring = Buffer.Substring(1, Buffer.Length - 2) + ' ';
+                                    Input = substring;
+                                    FSM.CurrentState = State.start;
+                                    FSM.FormerState = State.start;
+                                    Run();
+                                    Input = tempInput;
+                                    FSM.CurrentState = tempCurrentState;
+                                    FSM.FormerState = tempFormerState;
+                                }
+                                Records.Add(new Record { Token = Token.separator, Lexeme = ")" });
+                            }
+                            else if (FSM.CurrentState == State.end_bracket)
+                            {
+                                //Records.Add(new Record { Token = Token.separator, Lexeme = Buffer });
+                                Records.Add(new Record { Token = Token.separator, Lexeme = "[" });
+                                if (Buffer.Length > 2)
+                                {
+                                    string tempInput = Input;
+                                    var tempCurrentState = FSM.CurrentState;
+                                    var tempFormerState = FSM.FormerState;
+                                    string substring = Buffer.Substring(1, Buffer.Length - 2) + ' ';
+                                    Input = substring;
+                                    FSM.CurrentState = State.start;
+                                    FSM.FormerState = State.start;
+                                    Run();
+                                    Input = tempInput;
+                                    FSM.CurrentState = tempCurrentState;
+                                    FSM.FormerState = tempFormerState;
+                                }
+                                Records.Add(new Record { Token = Token.separator, Lexeme = "]" });
+                            }
+                            Buffer = "";
+                        }
+
+                        if (FSM.CurrentState == State.end_identifier || 
+                            FSM.CurrentState == State.end_integer || 
+                            FSM.CurrentState == State.end_real || 
+                            FSM.CurrentState == State.end_separator || 
+                            FSM.CurrentState == State.end_parenthesis || 
+                            FSM.CurrentState == State.end_brace || 
+                            FSM.CurrentState == State.end_bracket || 
+                            FSM.CurrentState == State.end_dot || 
+                            FSM.CurrentState == State.end_quote ||
+                            FSM.CurrentState == State._operator
+                            )
+                        {
+                            if (FSM.CurrentState == State.end_identifier || FSM.CurrentState == State.end_integer || FSM.CurrentState == State.end_real) //back up
+                            {
+                                --i;
+                            }
+                            FSM.Lexer(Input[i]); // loads start state
+                        }
+                    }
+                }
+            }
+
+        }
+
+        private int GetClosingCommentIndex(int openingCommentIndex)
+        {
+            int ClosingCommentIndex = Input.IndexOf('!', openingCommentIndex + 1);
+            //returns -1 if not found
+            if (ClosingCommentIndex == -1) return openingCommentIndex;
+            else return ClosingCommentIndex;
+            //int closingCommentLoc = Input.IndexOf('!', i + 1);
+            ////returns -1 if not found
+            //if(Input[closingCommentLoc] == '!')
+            //{
+            //    i = closingCommentLoc+1;
+            //}
+        }
+
+        //private static bool IsOperator(char c)
+        //{
+        //    //*+-=/><%
+        //    return c == '=' || c == '+' || c == '-' || c == '/' || c == '*' || c == '%' || c == '>' || c == '<';
+        //}
+
+        //private static bool IsSeparator(char c)
+        //{
+        //    //'(){}[],.:;! sp(space)
+        //    return c== '\'' ||  c == '(' || c == ')' || c == '{' || c == '}' || c == '['  || c == ']' || c == ',' || c == '.' || c == ':' || c == ';' || c == '!';
+        //}
+
+        private static bool IsKeyWord(string s)
+        {
+            //KEYWORDS 	=	int, float, bool, if, else, then, do, while, whileend, do, doend, for, and, or, function
+            return s.Equals("int") || s.Equals("float") || s.Equals("bool") || s.Equals("if") || s.Equals("else") || s.Equals("then") ||
+                   s.Equals("do") || s.Equals("while") || s.Equals("whileend") || s.Equals("doend") || s.Equals("for") || s.Equals("and") ||
+                   s.Equals("or") || s.Equals("function");
+        }
+
+        private string Input { get; set; }
+
+        private readonly List<Record> Records;
+
+        private FSM FSM;
+    }
+
+    public enum Token { keyword, identifier, integer, realnumber, _operator, separator, whitespace, blankline }
+
+    public class Record
+    {
+        public Record() { }
+
+        public Token Token { get; set; }
+
+        public string Lexeme { get; set; } 
+    }
+
+    public enum State
+    {
+        start = 1,
+        identifier,
+        end_identifier,
+        integer,
+        end_integer,
+        dot,
+        end_dot,
+        real,
+        end_real,
+        brace,
+        end_brace,
+        parenthesis,
+        end_parenthesis,
+        bracket,
+        end_bracket,
+        end_separator,
+        _operator,
+        quote,
+        end_quote
+    }
+
+    public class Attribute
+    {
+        public char Character { get; set; }
+        public int  Index { get; set; }
+    }
+
+    public class FSM
+    {
+        public readonly int[,] Table;
+
+        public readonly List<int> EndStates;
+
+        public readonly List<Attribute> Columns;
+
+        public State CurrentState { get; set; }
+
+        public State FormerState { get; set; }
+
+        public FSM()
+        {
+            CurrentState = State.start;
+            FormerState = State.start;
+            Table = new int[19, 24]
+            {
+                { 2 , 4 , 10, 16, 12, 16, 14, 16, 16, 16, 16, 16, 1 , 16, 17, 17, 17, 17, 17, 17, 17, 17, 18, 1  },
+                { 2 , 2 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 2 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 5 , 4 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 8 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 7 , 8 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 9 , 8 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 10, 10, 10, 11, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 12, 12, 12, 12, 12, 13, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12 },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 14, 14, 14, 14, 14, 14, 14, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14 },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18 },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  }
+            };
+            EndStates = new List<int>();
+            EndStates.Add(3);
+            EndStates.Add(5);
+            EndStates.Add(7);
+            EndStates.Add(9);
+            EndStates.Add(11);
+            EndStates.Add(13);
+            EndStates.Add(15);
+            EndStates.Add(16);
+            EndStates.Add(17);
+            EndStates.Add(19);
+
+            Columns = new List<Attribute>();
+            Columns.Add(new Attribute { Index = 0, Character = 'l' });
+            Columns.Add(new Attribute { Index = 1, Character = 'd' });
+            Columns.Add(new Attribute { Index = 2, Character = '{' });
+            Columns.Add(new Attribute { Index = 3, Character = '}' });
+            Columns.Add(new Attribute { Index = 4, Character = '(' });
+            Columns.Add(new Attribute { Index = 5, Character = ')' });
+            Columns.Add(new Attribute { Index = 6, Character = '[' });
+            Columns.Add(new Attribute { Index = 7, Character = ']' });
+            Columns.Add(new Attribute { Index = 8, Character = ',' });
+            Columns.Add(new Attribute { Index = 9, Character = '.' });
+            Columns.Add(new Attribute { Index = 10, Character = ':' });
+            Columns.Add(new Attribute { Index = 11, Character = ';' });
+            Columns.Add(new Attribute { Index = 12, Character = ' ' });
+            Columns.Add(new Attribute { Index = 13, Character = '$' });
+            Columns.Add(new Attribute { Index = 14, Character = '*' });
+            Columns.Add(new Attribute { Index = 15, Character = '+' });
+            Columns.Add(new Attribute { Index = 16, Character = '-' });
+            Columns.Add(new Attribute { Index = 17, Character = '=' });
+            Columns.Add(new Attribute { Index = 18, Character = '/' });
+            Columns.Add(new Attribute { Index = 19, Character = '>' });
+            Columns.Add(new Attribute { Index = 20, Character = '<' });
+            Columns.Add(new Attribute { Index = 21, Character = '%' });
+            Columns.Add(new Attribute { Index = 22, Character = '\'' });
+            Columns.Add(new Attribute { Index = 23, Character = '\t' });
+
+        }
+
+        public void Lexer(char i)
+        {
+            if (char.IsLetter(i))
+            {
+                var stateInteger = Table[((int)CurrentState) - 1, 0];
+                FormerState = CurrentState;
+                CurrentState = (State)stateInteger;
+            }
+            else if (char.IsDigit(i))
+            {
+                var stateInteger = Table[((int)CurrentState) - 1, 1];
+                FormerState = CurrentState;
+                CurrentState = (State)stateInteger;
+            }
+            else
+            {
+                var attribute = Columns.FirstOrDefault(m => m.Character.Equals(i));
+                var stateInteger = Table[((int)CurrentState) - 1, attribute.Index];
+                FormerState = CurrentState;
+                CurrentState = (State)stateInteger;
+            }
+        }
+
+        public bool IsEndingState()
+        {
+            return EndStates.Any(m => m.Equals((int)CurrentState));
+        }
+       
+    }
+
+}
