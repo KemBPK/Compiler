@@ -93,7 +93,7 @@ namespace CompilerLib.LexicalAnalyzer
                                     string tempInput = Input;
                                     var tempCurrentState = FSM.CurrentState;
                                     var tempFormerState = FSM.FormerState;
-                                    string substring = Buffer.Substring(1, Buffer.Length - 2) + ' '; //puts a separator if nothing is between the char and )
+                                    string substring = Buffer.Substring(1, Buffer.Length - 2) + ' '; //puts a separator if nothing is between the char and }
                                     Input = substring;
                                     FSM.CurrentState = State.start;
                                     FSM.FormerState = State.start;
@@ -163,7 +163,12 @@ namespace CompilerLib.LexicalAnalyzer
                             {
                                 --i;
                             }
-                            FSM.Lexer(Input[i]); // loads start state
+                            //FSM.Lexer(Input[i]); // loads start state
+                            //or
+                            FSM.FormerState = FSM.CurrentState;
+                            FSM.CurrentState = State.start;
+                            //or
+                            //FSM.Lexer(' ');
                         }
                     }
                 }
