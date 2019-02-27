@@ -43,6 +43,8 @@ namespace CompilerLib.LexicalAnalyzer
             if (Input != null)
             {
                 Input = Input.Replace("\r\n", " "); // Replaces enters and newlines in the input string.
+                Input = Input.Replace("\n", " ");
+
                 string Buffer = "";
                 for (int i = 0; i < Input.Length; ++i)
                 {
