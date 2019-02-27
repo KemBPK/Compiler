@@ -1,4 +1,4 @@
-﻿! Find largest value between two numbers 
+﻿! Find largest value between two numbers !
 int num1, num2, large$
 if(num1 > num2)
 {
@@ -7,5 +7,4 @@ if(num1 > num2)
 else
 {
 	large = num2$;
-}!
-for(int i=0; i<10; ++i){}
+} 

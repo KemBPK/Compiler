@@ -1,26 +1,40 @@
-﻿using System;
+﻿// Brandon Kem
+// CPSC 323
+// MW 1:00 PM - 2:15 PM
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 
 namespace CompilerLib.LexicalAnalyzer
 {
-    //Container that contains the content of the text file (either in one string or in lines)
-    //Go on character at a time and check if the token (character input) is valid in the FSM. If not, keeping reading in more characters.
-    //While reading the characters and checkign for valid tokens, add the valid token into another separate container (record)
-    //Do this until you hit the end of the string input. Then go through the record container and output the token and lexeme
-
+    /*
+     * INSTRUCTIONS: 
+     *                  To run the lexical analyzer, initialize a LexicalAnalyzer object and pass in
+     *                  the input as a string. It will automatically run the lexer and output the tokens
+     *                  and lexemes. For now, the user cannot do anything else with the object after
+     *                  initialization.
+     * 
+     */
     public class LexicalAnalyzer
     {
+        /*
+         * Constructor:
+         *                  Gets a string input and runs the lexer through the characters.
+         *                  Outputs the records at the end (token/lexeme).
+         * 
+         */
         public LexicalAnalyzer(string i)
         {
             Records = new List<Record>();
             Input = i;
             FSM = new FSM();
             Run();
+            Console.WriteLine("TOKENS" + "\t\t\t\t\t" + "Lexemes\n");
             foreach (var record in Records)
-            {
-                Console.WriteLine(record.Token + ": " + record.Lexeme);
+            {   
+                Console.WriteLine(record.Token + "\t\t" + (record.Token == Token.keyword ? "\t" : "") + "=\t\t" + record.Lexeme);
             }
         }
 
@@ -28,28 +42,27 @@ namespace CompilerLib.LexicalAnalyzer
         {
             if (Input != null)
             {
-                Input = Input.Replace("\r\n", " ");
+                Input = Input.Replace("\r\n", " "); // Replaces enters and newlines in the input string.
                 string Buffer = "";
                 for (int i = 0; i < Input.Length; ++i)
                 {
-                    //Skips comment
+                    // Skips comment by assigning the index of the character after the closing comment character (!)
                     if (Input[i] == '!') i = GetClosingCommentIndex(i) + 1;
 
-                    //if State is identifier or integer or real, add to buffer 
-                    var test = Input[i];
+                    var test = Input[i]; // For debugging
 
                     FSM.Lexer(Input[i]);
-                    if (FSM.CurrentState == State.integer || 
-                        FSM.CurrentState == State.identifier ||
-                        FSM.CurrentState == State.real || 
+                    if (FSM.CurrentState == State.integer       || 
+                        FSM.CurrentState == State.identifier    ||
+                        FSM.CurrentState == State.real          || 
                         FSM.CurrentState == State.end_separator || 
-                        FSM.CurrentState == State._operator || 
-                        FSM.CurrentState == State.brace || FSM.CurrentState == State.parenthesis || FSM.CurrentState == State.bracket ||
-                        FSM.CurrentState == State.end_brace || FSM.CurrentState == State.end_parenthesis || FSM.CurrentState == State.end_bracket)
+                        FSM.CurrentState == State._operator     || 
+                        FSM.CurrentState == State.brace         || FSM.CurrentState == State.parenthesis     || FSM.CurrentState == State.bracket   ||
+                        FSM.CurrentState == State.end_brace     || FSM.CurrentState == State.end_parenthesis || FSM.CurrentState == State.end_bracket)
                     {
-                        Buffer += Input[i];
+                        Buffer += Input[i]; // Adds character to buffer if the FSM are in one the states specified above.
                     }
-                    if (FSM.IsEndingState())
+                    if (FSM.IsEndingState()) //If the FSM is in an ending state, add a record
                     {
                         if (!Buffer.Equals(""))
                         {
@@ -85,81 +98,36 @@ namespace CompilerLib.LexicalAnalyzer
                             }
                             else if (FSM.CurrentState == State.end_brace)
                             {
-                                //Records.Add(new Record { Token = Token.separator, Lexeme = Buffer });
                                 Records.Add(new Record { Token = Token.separator, Lexeme = "{" });
                                 //call run again but without brackets
                                 if (Buffer.Length > 2)
                                 {
-                                    string tempInput = Input;
-                                    var tempCurrentState = FSM.CurrentState;
-                                    var tempFormerState = FSM.FormerState;
-                                    string substring = Buffer.Substring(1, Buffer.Length - 2) + ' '; //puts a separator if nothing is between the char and }
-                                    Input = substring;
-                                    FSM.CurrentState = State.start;
-                                    FSM.FormerState = State.start;
-                                    Run();
-                                    Input = tempInput;
-                                    FSM.CurrentState = tempCurrentState;
-                                    FSM.FormerState = tempFormerState;
+                                    RunInsideSeparators(Buffer);
                                 }
                                 Records.Add(new Record { Token = Token.separator, Lexeme = "}" });
                             }
                             else if (FSM.CurrentState == State.end_parenthesis)
                             {
-                                //Records.Add(new Record { Token = Token.separator, Lexeme = Buffer });
                                 Records.Add(new Record { Token = Token.separator, Lexeme = "(" });
                                 if (Buffer.Length > 2)
                                 {
-                                    string tempInput = Input;
-                                    var tempCurrentState = FSM.CurrentState;
-                                    var tempFormerState = FSM.FormerState;
-                                    string substring = Buffer.Substring(1, Buffer.Length - 2) + ' ';
-                                    Input = substring;
-                                    FSM.CurrentState = State.start;
-                                    FSM.FormerState = State.start;
-                                    Run();
-                                    Input = tempInput;
-                                    FSM.CurrentState = tempCurrentState;
-                                    FSM.FormerState = tempFormerState;
+                                    RunInsideSeparators(Buffer);
                                 }
                                 Records.Add(new Record { Token = Token.separator, Lexeme = ")" });
                             }
                             else if (FSM.CurrentState == State.end_bracket)
                             {
-                                //Records.Add(new Record { Token = Token.separator, Lexeme = Buffer });
                                 Records.Add(new Record { Token = Token.separator, Lexeme = "[" });
                                 if (Buffer.Length > 2)
                                 {
-                                    string tempInput = Input;
-                                    var tempCurrentState = FSM.CurrentState;
-                                    var tempFormerState = FSM.FormerState;
-                                    string substring = Buffer.Substring(1, Buffer.Length - 2) + ' ';
-                                    Input = substring;
-                                    FSM.CurrentState = State.start;
-                                    FSM.FormerState = State.start;
-                                    Run();
-                                    Input = tempInput;
-                                    FSM.CurrentState = tempCurrentState;
-                                    FSM.FormerState = tempFormerState;
+                                    RunInsideSeparators(Buffer);
                                 }
                                 Records.Add(new Record { Token = Token.separator, Lexeme = "]" });
                             }
-                            Buffer = "";
-                        }
 
-                        if (FSM.CurrentState == State.end_identifier || 
-                            FSM.CurrentState == State.end_integer || 
-                            FSM.CurrentState == State.end_real || 
-                            FSM.CurrentState == State.end_separator || 
-                            FSM.CurrentState == State.end_parenthesis || 
-                            FSM.CurrentState == State.end_brace || 
-                            FSM.CurrentState == State.end_bracket || 
-                            FSM.CurrentState == State.end_dot || 
-                            FSM.CurrentState == State.end_quote ||
-                            FSM.CurrentState == State._operator
-                            )
-                        {
-                            if (FSM.CurrentState == State.end_identifier || FSM.CurrentState == State.end_integer || FSM.CurrentState == State.end_real) //back up
+                            Buffer = ""; //resets buffer
+
+                            if (FSM.CurrentState == State.end_identifier || FSM.CurrentState == State.end_integer || FSM.CurrentState == State.end_real) //back up one character in the input
                             {
                                 --i;
                             }
@@ -170,6 +138,30 @@ namespace CompilerLib.LexicalAnalyzer
                             //or
                             //FSM.Lexer(' ');
                         }
+
+                        //if (FSM.CurrentState == State.end_identifier || 
+                        //    FSM.CurrentState == State.end_integer || 
+                        //    FSM.CurrentState == State.end_real || 
+                        //    FSM.CurrentState == State.end_separator || 
+                        //    FSM.CurrentState == State.end_parenthesis || 
+                        //    FSM.CurrentState == State.end_brace || 
+                        //    FSM.CurrentState == State.end_bracket || 
+                        //    FSM.CurrentState == State.end_dot || 
+                        //    FSM.CurrentState == State.end_quote ||
+                        //    FSM.CurrentState == State._operator
+                        //    )
+                        //{
+                        //    if (FSM.CurrentState == State.end_identifier || FSM.CurrentState == State.end_integer || FSM.CurrentState == State.end_real) //back up
+                        //    {
+                        //        --i;
+                        //    }
+                        //    //FSM.Lexer(Input[i]); // loads start state
+                        //    //or
+                        //    FSM.FormerState = FSM.CurrentState;
+                        //    FSM.CurrentState = State.start;
+                        //    //or
+                        //    //FSM.Lexer(' ');
+                        //}
                     }
                 }
             }
@@ -182,25 +174,22 @@ namespace CompilerLib.LexicalAnalyzer
             //returns -1 if not found
             if (ClosingCommentIndex == -1) return openingCommentIndex;
             else return ClosingCommentIndex;
-            //int closingCommentLoc = Input.IndexOf('!', i + 1);
-            ////returns -1 if not found
-            //if(Input[closingCommentLoc] == '!')
-            //{
-            //    i = closingCommentLoc+1;
-            //}
         }
 
-        //private static bool IsOperator(char c)
-        //{
-        //    //*+-=/><%
-        //    return c == '=' || c == '+' || c == '-' || c == '/' || c == '*' || c == '%' || c == '>' || c == '<';
-        //}
-
-        //private static bool IsSeparator(char c)
-        //{
-        //    //'(){}[],.:;! sp(space)
-        //    return c== '\'' ||  c == '(' || c == ')' || c == '{' || c == '}' || c == '['  || c == ']' || c == ',' || c == '.' || c == ':' || c == ';' || c == '!';
-        //}
+        private void RunInsideSeparators(string Buffer)
+        {
+            string tempInput = Input;
+            State tempCurrentState = FSM.CurrentState;
+            State tempFormerState = FSM.FormerState;
+            string substring = Buffer.Substring(1, Buffer.Length - 2) + ' ';
+            Input = substring;
+            FSM.CurrentState = State.start;
+            FSM.FormerState = State.start;
+            Run();
+            Input = tempInput;
+            FSM.CurrentState = tempCurrentState;
+            FSM.FormerState = tempFormerState;
+        }
 
         private static bool IsKeyWord(string s)
         {
