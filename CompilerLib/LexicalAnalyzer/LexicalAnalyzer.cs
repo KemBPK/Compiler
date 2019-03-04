@@ -34,10 +34,16 @@ namespace CompilerLib.LexicalAnalyzer
             Console.WriteLine("TOKENS" + "\t\t\t\t\t" + "Lexemes\n");
             foreach (var record in Records)
             {   
-                Console.WriteLine(record.Token + "\t\t" + (record.Token == Token.keyword ? "\t" : "") + "=\t\t" + record.Lexeme);
+                Console.WriteLine(record.Token + "\t\t" + (record.Token == Token.keyword || record.Token == Token.integer ? "\t" : "") + "=\t\t" + record.Lexeme);
             }
         }
 
+        /*
+         * Run:
+         *                  Reads in the input string into the Finite State Machine.
+         *                  Adds a new record when the FSM hits an ending state.
+         * 
+         */
         private void Run()
         {
             if (Input != null)
@@ -141,29 +147,6 @@ namespace CompilerLib.LexicalAnalyzer
                             //FSM.Lexer(' ');
                         }
 
-                        //if (FSM.CurrentState == State.end_identifier || 
-                        //    FSM.CurrentState == State.end_integer || 
-                        //    FSM.CurrentState == State.end_real || 
-                        //    FSM.CurrentState == State.end_separator || 
-                        //    FSM.CurrentState == State.end_parenthesis || 
-                        //    FSM.CurrentState == State.end_brace || 
-                        //    FSM.CurrentState == State.end_bracket || 
-                        //    FSM.CurrentState == State.end_dot || 
-                        //    FSM.CurrentState == State.end_quote ||
-                        //    FSM.CurrentState == State._operator
-                        //    )
-                        //{
-                        //    if (FSM.CurrentState == State.end_identifier || FSM.CurrentState == State.end_integer || FSM.CurrentState == State.end_real) //back up
-                        //    {
-                        //        --i;
-                        //    }
-                        //    //FSM.Lexer(Input[i]); // loads start state
-                        //    //or
-                        //    FSM.FormerState = FSM.CurrentState;
-                        //    FSM.CurrentState = State.start;
-                        //    //or
-                        //    //FSM.Lexer(' ');
-                        //}
                     }
                 }
             }
@@ -178,6 +161,13 @@ namespace CompilerLib.LexicalAnalyzer
             else return ClosingCommentIndex;
         }
 
+        /*
+         * RunInsideSeparators:
+         *                  Reads in the input string minus the first and last character 
+         *                  into the Finite State Machine. Adds a new record when the FSM 
+         *                  hits an ending state.
+         * 
+         */
         private void RunInsideSeparators(string Buffer)
         {
             string tempInput = Input;
@@ -193,6 +183,11 @@ namespace CompilerLib.LexicalAnalyzer
             FSM.FormerState = tempFormerState;
         }
 
+        /*
+         * IsKeyWord:
+         *                  Checks if string is a keyword.
+         * 
+         */
         private static bool IsKeyWord(string s)
         {
             //KEYWORDS 	=	int, float, bool, if, else, then, do, while, whileend, do, doend, for, and, or, function
@@ -260,13 +255,18 @@ namespace CompilerLib.LexicalAnalyzer
 
         public State FormerState { get; set; }
 
+        /*
+         * Constructor:
+         *                  Sets up the transition table and other member variables.
+         * 
+         */
         public FSM()
         {
             CurrentState = State.start;
             FormerState = State.start;
             Table = new int[19, 24]
             {
-                { 2 , 4 , 10, 16, 12, 16, 14, 16, 16, 16, 16, 16, 1 , 16, 17, 17, 17, 17, 17, 17, 17, 17, 18, 1  },
+                { 2 , 4 , 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 1 , 16, 17, 17, 17, 17, 17, 17, 17, 17, 18, 1  },
                 { 2 , 2 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 2 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3  },
                 { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
                 { 5 , 4 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 8 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5  },
@@ -326,6 +326,12 @@ namespace CompilerLib.LexicalAnalyzer
 
         }
 
+        /*
+         * Lexer:
+         *                  Reads a character into the FSM. The transition table
+         *                  will determines the FSM's next state.
+         * 
+         */
         public void Lexer(char i)
         {
             if (char.IsLetter(i))
@@ -349,6 +355,11 @@ namespace CompilerLib.LexicalAnalyzer
             }
         }
 
+        /*
+         * IsEndingState:
+         *                  Checks if the FSM's current state is an accepting state.
+         * 
+         */
         public bool IsEndingState()
         {
             return EndStates.Any(m => m.Equals((int)CurrentState));
