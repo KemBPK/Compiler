@@ -64,7 +64,7 @@ namespace CompilerLib.LexicalAnalyzer
                         FSM.CurrentState == State._operator     || 
                         FSM.CurrentState == State.brace         || FSM.CurrentState == State.parenthesis     || FSM.CurrentState == State.bracket   ||
                         FSM.CurrentState == State.end_brace     || FSM.CurrentState == State.end_parenthesis || FSM.CurrentState == State.end_bracket ||
-                        FSM.CurrentState == State.quote         || FSM.CurrentState == State.end_quote)
+                        FSM.CurrentState == State.quote         || FSM.CurrentState == State.end_quote       || FSM.CurrentState == State.comment)
                     {
                         Buffer += Input[i]; // Adds character to buffer if the FSM are in one the states specified above.
                     }
@@ -148,6 +148,19 @@ namespace CompilerLib.LexicalAnalyzer
                         
 
                     }
+                }
+
+                //If there are no closing comment bracket, run the lexer again but ignore the initial comment bracket
+                if (FSM.CurrentState == State.comment)
+                { 
+                    Records.Add(new Record { Token = Token.separator, Lexeme = "!" });
+                    Buffer = Buffer.Substring(1, Buffer.Length - 1) + ' ';
+                    string temp = Input;
+                    Input = Buffer;
+                    FSM.CurrentState = State.start;
+                    FSM.FormerState = State.end_separator;
+                    Run();
+                    Input = temp;
                 }
             }
 
