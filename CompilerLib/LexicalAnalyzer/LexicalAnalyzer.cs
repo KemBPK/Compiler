@@ -28,7 +28,7 @@ namespace CompilerLib.LexicalAnalyzer
         public LexicalAnalyzer(string i)
         {
             Records = new List<Record>();
-            Input = i;
+            Input = i + ' ';
             FSM = new FSM();
             Run();
             Console.WriteLine("TOKENS" + "\t\t\t\t\t" + "Lexemes\n");
@@ -54,9 +54,6 @@ namespace CompilerLib.LexicalAnalyzer
                 string Buffer = "";
                 for (int i = 0; i < Input.Length; ++i)
                 {
-                    // Skips comment by assigning the index of the character after the closing comment character (!)
-                    if (Input[i] == '!') i = GetClosingCommentIndex(i) + 1;
-
                     var test = Input[i]; // For debugging
 
                     FSM.Lexer(Input[i]);
@@ -66,86 +63,89 @@ namespace CompilerLib.LexicalAnalyzer
                         FSM.CurrentState == State.end_separator || 
                         FSM.CurrentState == State._operator     || 
                         FSM.CurrentState == State.brace         || FSM.CurrentState == State.parenthesis     || FSM.CurrentState == State.bracket   ||
-                        FSM.CurrentState == State.end_brace     || FSM.CurrentState == State.end_parenthesis || FSM.CurrentState == State.end_bracket)
+                        FSM.CurrentState == State.end_brace     || FSM.CurrentState == State.end_parenthesis || FSM.CurrentState == State.end_bracket ||
+                        FSM.CurrentState == State.quote         || FSM.CurrentState == State.end_quote)
                     {
                         Buffer += Input[i]; // Adds character to buffer if the FSM are in one the states specified above.
                     }
                     if (FSM.IsEndingState()) //If the FSM is in an ending state, add a record
                     {
-                        if (!Buffer.Equals(""))
+                        if (FSM.CurrentState == State.end_identifier)
                         {
-                            if (FSM.CurrentState == State.end_identifier)
+                            //Search for keywords
+                            //if not, then the buffer string is an identifier
+                            //add record
+                            if (IsKeyWord(Buffer))
                             {
-                                //Search for keywords
-                                //if not, then the buffer string is an identifier
-                                //add record
-                                if (IsKeyWord(Buffer))
-                                {
-                                    Records.Add(new Record { Token = Token.keyword, Lexeme = Buffer });
-                                }
-                                else
-                                {
-                                    Records.Add(new Record { Token = Token.identifier, Lexeme = Buffer });
-                                }
+                                Records.Add(new Record { Token = Token.keyword, Lexeme = Buffer });
                             }
-                            else if (FSM.CurrentState == State.end_integer)
+                            else
                             {
-                                Records.Add(new Record { Token = Token.integer, Lexeme = Buffer });
+                                Records.Add(new Record { Token = Token.identifier, Lexeme = Buffer });
                             }
-                            else if (FSM.CurrentState == State.end_real)
-                            {
-                                Records.Add(new Record { Token = Token.realnumber, Lexeme = Buffer });
-                            }
-                            else if (FSM.CurrentState == State.end_separator)
-                            {
-                                Records.Add(new Record { Token = Token.separator, Lexeme = Buffer });
-                            }
-                            else if (FSM.CurrentState == State._operator)
-                            {
-                                Records.Add(new Record { Token = Token._operator, Lexeme = Buffer });
-                            }
-                            else if (FSM.CurrentState == State.end_brace)
-                            {
-                                Records.Add(new Record { Token = Token.separator, Lexeme = "{" });
-                                //call run again but without brackets
-                                if (Buffer.Length > 2)
-                                {
-                                    RunInsideSeparators(Buffer);
-                                }
-                                Records.Add(new Record { Token = Token.separator, Lexeme = "}" });
-                            }
-                            else if (FSM.CurrentState == State.end_parenthesis)
-                            {
-                                Records.Add(new Record { Token = Token.separator, Lexeme = "(" });
-                                if (Buffer.Length > 2)
-                                {
-                                    RunInsideSeparators(Buffer);
-                                }
-                                Records.Add(new Record { Token = Token.separator, Lexeme = ")" });
-                            }
-                            else if (FSM.CurrentState == State.end_bracket)
-                            {
-                                Records.Add(new Record { Token = Token.separator, Lexeme = "[" });
-                                if (Buffer.Length > 2)
-                                {
-                                    RunInsideSeparators(Buffer);
-                                }
-                                Records.Add(new Record { Token = Token.separator, Lexeme = "]" });
-                            }
-
-                            Buffer = ""; //resets buffer
-
-                            if (FSM.CurrentState == State.end_identifier || FSM.CurrentState == State.end_integer || FSM.CurrentState == State.end_real) //back up one character in the input
-                            {
-                                --i;
-                            }
-                            //FSM.Lexer(Input[i]); // loads start state
-                            //or
-                            FSM.FormerState = FSM.CurrentState;
-                            FSM.CurrentState = State.start;
-                            //or
-                            //FSM.Lexer(' ');
                         }
+                        else if (FSM.CurrentState == State.end_integer)
+                        {
+                            Records.Add(new Record { Token = Token.integer, Lexeme = Buffer });
+                        }
+                        else if (FSM.CurrentState == State.end_real)
+                        {
+                            Records.Add(new Record { Token = Token.realnumber, Lexeme = Buffer });
+                        }
+                        else if (FSM.CurrentState == State.end_separator)
+                        {
+                            Records.Add(new Record { Token = Token.separator, Lexeme = Buffer });
+                        }
+                        else if (FSM.CurrentState == State._operator)
+                        {
+                            Records.Add(new Record { Token = Token._operator, Lexeme = Buffer });
+                        }
+                        else if (FSM.CurrentState == State.end_brace)
+                        {
+                            Records.Add(new Record { Token = Token.separator, Lexeme = "{" });
+                            //call run again but without brackets
+                            if (Buffer.Length > 2)
+                            {
+                                RunInsideSeparators(Buffer);
+                            }
+                            Records.Add(new Record { Token = Token.separator, Lexeme = "}" });
+                        }
+                        else if (FSM.CurrentState == State.end_parenthesis)
+                        {
+                            Records.Add(new Record { Token = Token.separator, Lexeme = "(" });
+                            if (Buffer.Length > 2)
+                            {
+                                RunInsideSeparators(Buffer);
+                            }
+                            Records.Add(new Record { Token = Token.separator, Lexeme = ")" });
+                        }
+                        else if (FSM.CurrentState == State.end_bracket)
+                        {
+                            Records.Add(new Record { Token = Token.separator, Lexeme = "[" });
+                            if (Buffer.Length > 2)
+                            {
+                                RunInsideSeparators(Buffer);
+                            }
+                            Records.Add(new Record { Token = Token.separator, Lexeme = "]" });
+                        }
+                        else if (FSM.CurrentState  == State.end_quote)
+                        {
+                            Records.Add(new Record { Token = Token.quotation, Lexeme = Buffer });
+                        }
+
+                        Buffer = ""; //resets buffer
+
+                        if (FSM.CurrentState == State.end_identifier || FSM.CurrentState == State.end_integer || FSM.CurrentState == State.end_real) //back up one character in the input
+                        {
+                            --i;
+                        }
+                        //FSM.Lexer(Input[i]); // loads start state
+                        //or
+                        FSM.FormerState = FSM.CurrentState;
+                        FSM.CurrentState = State.start;
+                        //or
+                        //FSM.Lexer(' ');
+                        
 
                     }
                 }
@@ -203,7 +203,7 @@ namespace CompilerLib.LexicalAnalyzer
         private FSM FSM;
     }
 
-    public enum Token { keyword, identifier, integer, realnumber, _operator, separator, whitespace, blankline }
+    public enum Token { keyword, identifier, integer, realnumber, _operator, separator, whitespace, blankline, quotation }
 
     public class Record
     {
@@ -234,7 +234,9 @@ namespace CompilerLib.LexicalAnalyzer
         end_separator,
         _operator,
         quote,
-        end_quote
+        end_quote,
+        comment,
+        end_comment
     }
 
     public class Attribute
@@ -264,27 +266,29 @@ namespace CompilerLib.LexicalAnalyzer
         {
             CurrentState = State.start;
             FormerState = State.start;
-            Table = new int[19, 24]
+            Table = new int[21, 25]
             {
-                { 2 , 4 , 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 1 , 16, 17, 17, 17, 17, 17, 17, 17, 17, 18, 1  },
-                { 2 , 2 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 2 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3  },
-                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
-                { 5 , 4 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 8 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5  },
-                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
-                { 7 , 8 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7  },
-                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
-                { 9 , 8 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9  },
-                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
-                { 10, 10, 10, 11, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
-                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
-                { 12, 12, 12, 12, 12, 13, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12 },
-                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
-                { 14, 14, 14, 14, 14, 14, 14, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14 },
-                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
-                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
-                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
-                { 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18 },
-                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  }
+                { 2 , 4 , 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 1 , 16, 17, 17, 17, 17, 17, 17, 17, 17, 18, 1 , 20 },
+                { 2 , 2 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 2 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 , 3  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 5 , 4 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 8 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5 , 5  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 7 , 8 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7 , 7  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 9 , 8 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9 , 9  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 10, 10, 10, 11, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 12, 12, 12, 12, 12, 13, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12 },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 14, 14, 14, 14, 14, 14, 14, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 13 },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 19, 18, 18 },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  },
+                { 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 21 },
+                { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1  }
             };
             EndStates = new List<int>();
             EndStates.Add(3);
@@ -297,6 +301,7 @@ namespace CompilerLib.LexicalAnalyzer
             EndStates.Add(16);
             EndStates.Add(17);
             EndStates.Add(19);
+            EndStates.Add(21);
 
             Columns = new List<Attribute>();
             Columns.Add(new Attribute { Index = 0, Character = 'l' });
@@ -323,6 +328,7 @@ namespace CompilerLib.LexicalAnalyzer
             Columns.Add(new Attribute { Index = 21, Character = '%' });
             Columns.Add(new Attribute { Index = 22, Character = '\'' });
             Columns.Add(new Attribute { Index = 23, Character = '\t' });
+            Columns.Add(new Attribute { Index = 24, Character = '!' });    
 
         }
 
