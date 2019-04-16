@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CompilerLib.LexicalAnalyzer;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,9 @@ namespace CompilerLib.SyntaxAnalyzer
 
         public SyntaxAnalyzer()
         {
+
+            Stack = new Stack<char>();
+
             ProductionRules = new List<ProductionRule>();
             ProductionRules.Add(new ProductionRule { A = 'E', B = "Te" });
             ProductionRules.Add(new ProductionRule { A = 'e', B = "STe" });
@@ -34,18 +38,31 @@ namespace CompilerLib.SyntaxAnalyzer
             ProductionRules.Add(new ProductionRule { A = 'F', B = "i" });
 
 
+            //Table = new ProductionRule[7, 8]
+            //{
+            //    { new ProductionRule { A = 'E', B = "Te" }, null, null, null, null, new ProductionRule { A = 'E', B = "Te" }, null, null  },
+            //    { null, new ProductionRule { A = 'e', B = "STe" }, new ProductionRule { A = 'e', B = "STe" }, null, null, null, new ProductionRule { IsEpsilon = true}, new ProductionRule { IsEpsilon = true}  },
+            //    { null, new ProductionRule { A = 'S', B = "+" }, new ProductionRule { A = 'S', B = "-" }, null, null, null, null, null  },
+            //    { new ProductionRule { A = 'T', B = "Ft" }, null, null, null, null, new ProductionRule { A = 'T', B = "Ft" }, null, null  },
+            //    { null, new ProductionRule { IsEpsilon = true}, new ProductionRule { IsEpsilon = true}, new ProductionRule { A = 't', B = "QFt" }, new ProductionRule { A = 't', B = "QFt" }, null, new ProductionRule { IsEpsilon = true}, new ProductionRule { IsEpsilon = true}  },
+            //    { null, null, null, new ProductionRule { A = 'Q', B = "*" }, new ProductionRule { A = 'Q', B = "/" }, null, null, null  },
+            //    { new ProductionRule { A = 'F', B = "i" }, null, null, null, null, new ProductionRule { A = 'F', B = "(E)" }, null, null  }
+
+            //};
+
             Table = new ProductionRule[7, 8]
             {
-                { new ProductionRule { A = 'E', B = "Te" }, null, null, null, null, new ProductionRule { A = 'E', B = "Te" }, null, null  },
-                { null, new ProductionRule { A = 'e', B = "STe" }, new ProductionRule { A = 'e', B = "STe" }, null, null, null, new ProductionRule { IsEpsilon = true}, new ProductionRule { IsEpsilon = true}  },
-                { null, new ProductionRule { A = 'S', B = "+" }, new ProductionRule { A = 'S', B = "-" }, null, null, null, null, null  },
-                { new ProductionRule { A = 'T', B = "Ft" }, null, null, null, null, new ProductionRule { A = 'T', B = "Ft" }, null, null  },
-                { null, new ProductionRule { IsEpsilon = true}, new ProductionRule { IsEpsilon = true}, new ProductionRule { A = 't', B = "QFt" }, new ProductionRule { A = 't', B = "QFt" }, null, new ProductionRule { IsEpsilon = true}, new ProductionRule { IsEpsilon = true}  },
-                { null, null, null, new ProductionRule { A = 'Q', B = "*" }, new ProductionRule { A = 'Q', B = "/" }, null, null, null  },
-                { new ProductionRule { A = 'F', B = "i" }, null, null, null, null, new ProductionRule { A = 'F', B = "(E)" }, null, null  }
+                { ProductionRules[0], null, null, null, null, ProductionRules[0], null, null  },
+                { null, ProductionRules[1], ProductionRules[1], null, null, null, ProductionRules[2], ProductionRules[2]  },
+                { null, ProductionRules[3], ProductionRules[4], null, null, null, null, null  },
+                { ProductionRules[5], null, null, null, null, ProductionRules[5], null, null  },
+                { null, ProductionRules[7], ProductionRules[7], ProductionRules[6], ProductionRules[6], null, ProductionRules[7], ProductionRules[7]  },
+                { null, null, null, ProductionRules[8], ProductionRules[9], null, null, null  },
+                { ProductionRules[11], null, null, null, null, ProductionRules[10], null, null  }
 
             };
 
+          
             InputColumns = new List<InputColumn>();
             InputColumns.Add(new InputColumn { Index = 0, Input = 'i' });
             InputColumns.Add(new InputColumn { Index = 1, Input = '+' });
@@ -67,6 +84,62 @@ namespace CompilerLib.SyntaxAnalyzer
 
         }
 
+        //change to string and then use Lexer to get record
+        public bool Parse(List<Record> Records)
+        {
+            Stack.Push('$');
+            Stack.Push(ProductionRules[0].A);
+
+            Records.Add(new Record { Token = Token.separator, Lexeme = "$" });
+
+            foreach(Record r in Records)
+            {
+                while(true)
+                {
+                    //Compare r.lexeme (unless it the token is an identifier) with top of stack
+                    //if r == top, pop top and break
+                    //else
+                    //Find r.lexeme in row of Stack.Pop. Pop Top and Push the production rule backward.
+                    char input;
+                    if (r.Token == Token.identifier)
+                    {
+                        input = 'i'; //special case
+                    }
+                    else
+                    {
+                        input = r.Lexeme[0];
+                    }
+
+                    bool match = Stack.Peek().Equals(input);
+
+                    if (match)
+                    {
+                        Stack.Pop();
+                        break;
+                    }
+                    else
+                    {
+                        
+                        ProductionRule newRule = FindCell(Stack.Peek(), input);                       
+                        if (newRule == null)
+                        {
+                            return false; //error
+                        }
+                        Stack.Pop();
+                        if (!newRule.IsEpsilon)
+                        {
+                            string reverseString = Reverse(newRule.B);
+                            foreach (char c in reverseString)
+                            {
+                                Stack.Push(c);
+                            }
+                        }                          
+                    }
+                }
+            }
+            return Stack.Count() == 0;
+        }
+
         public int GetColIndex(char Input)
         {
             return InputColumns.FirstOrDefault(m => m.Input.Equals(Input)).Index;
@@ -85,6 +158,13 @@ namespace CompilerLib.SyntaxAnalyzer
         public bool IsNonTerminal(char A)
         {
             return AlphaRows.Any(m => m.A.Equals(A));
+        }
+
+        public static string Reverse(string s)
+        {
+            char[] charArray = s.ToCharArray();
+            Array.Reverse(charArray);
+            return new string(charArray);
         }
     }
 
