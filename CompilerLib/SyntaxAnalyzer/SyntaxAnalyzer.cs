@@ -22,12 +22,12 @@ namespace CompilerLib.SyntaxAnalyzer
             ProductionRules = new List<ProductionRule>();
             ProductionRules.Add(new ProductionRule { A = 'E', B = "Te" });
             ProductionRules.Add(new ProductionRule { A = 'e', B = "STe" });
-            ProductionRules.Add(new ProductionRule { IsEpsilon = true });
+            ProductionRules.Add(new ProductionRule { A = 'e', IsEpsilon = true });
             ProductionRules.Add(new ProductionRule { A = 'S', B = "+" });
             ProductionRules.Add(new ProductionRule { A = 'S', B = "-" });
             ProductionRules.Add(new ProductionRule { A = 'T', B = "Ft" });
             ProductionRules.Add(new ProductionRule { A = 't', B = "QFt" });
-            ProductionRules.Add(new ProductionRule { IsEpsilon = true });
+            ProductionRules.Add(new ProductionRule { A = 't', IsEpsilon = true });
             ProductionRules.Add(new ProductionRule { A = 'Q', B = "*" });
             ProductionRules.Add(new ProductionRule { A = 'Q', B = "/" });
             ProductionRules.Add(new ProductionRule { A = 'F', B = "(E)" });
