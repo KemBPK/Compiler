@@ -31,11 +31,11 @@ namespace CompilerLib.LexicalAnalyzer
             Input = i + ' ';
             FSM = new FSM();
             Run();
-            Console.WriteLine("TOKENS" + "\t\t\t\t\t" + "Lexemes\n");
-            foreach (var record in Records)
-            {   
-                Console.WriteLine(record.Token + "\t\t" + (record.Token == Token.keyword || record.Token == Token.integer ? "\t" : "") + "=\t\t" + record.Lexeme);
-            }
+            //Console.WriteLine("TOKENS" + "\t\t\t\t\t" + "Lexemes\n");
+            //foreach (var record in Records)
+            //{   
+            //    Console.WriteLine(record.Token + "\t\t" + (record.Token == Token.keyword || record.Token == Token.integer ? "\t" : "") + "=\t\t" + record.Lexeme);
+            //}
         }
 
         /*
@@ -207,6 +207,11 @@ namespace CompilerLib.LexicalAnalyzer
             return s.Equals("int") || s.Equals("float") || s.Equals("bool") || s.Equals("if") || s.Equals("else") || s.Equals("then") ||
                    s.Equals("do") || s.Equals("while") || s.Equals("whileend") || s.Equals("doend") || s.Equals("for") || s.Equals("and") ||
                    s.Equals("or") || s.Equals("function");
+        }
+
+        public List<Record> GetRecords()
+        {
+            return Records;
         }
 
         private string Input { get; set; }
