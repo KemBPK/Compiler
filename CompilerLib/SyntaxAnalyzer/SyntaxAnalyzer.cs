@@ -85,8 +85,12 @@ namespace CompilerLib.SyntaxAnalyzer
         }
 
         //change to string and then use Lexer to get record
-        public bool Parse(List<Record> Records)
+        public bool Parse(string str)
         {
+            var Lexer = new LexicalAnalyzer.LexicalAnalyzer(str);
+
+            List<Record> Records = Lexer.GetRecords();
+
             Stack.Push('$');
             Stack.Push(ProductionRules[0].A);
 
@@ -94,12 +98,14 @@ namespace CompilerLib.SyntaxAnalyzer
 
             foreach(Record r in Records)
             {
-                while(true)
+                Console.WriteLine("Token: " + r.Token + "\t" + "Lexeme: " + r.Lexeme);
+                while (true)
                 {
                     //Compare r.lexeme (unless it the token is an identifier) with top of stack
                     //if r == top, pop top and break
                     //else
                     //Find r.lexeme in row of Stack.Pop. Pop Top and Push the production rule backward.
+                    
                     char input;
                     if (r.Token == Token.identifier)
                     {
@@ -123,17 +129,32 @@ namespace CompilerLib.SyntaxAnalyzer
                         ProductionRule newRule = FindCell(Stack.Peek(), input);                       
                         if (newRule == null)
                         {
+                            if (r.Lexeme[0].Equals('$'))
+                            {
+                                Console.WriteLine("ERROR: incomplete syntax");
+                            }
+                            else
+                            {
+                                Console.WriteLine("ERROR: at character " + r.Lexeme);
+                            }
+                            
                             return false; //error
                         }
+                        
                         Stack.Pop();
                         if (!newRule.IsEpsilon)
                         {
+                            Console.WriteLine("\t" + newRule.A + " -> " + newRule.B);
                             string reverseString = Reverse(newRule.B);
                             foreach (char c in reverseString)
                             {
                                 Stack.Push(c);
                             }
-                        }                          
+                        }
+                        else
+                        {
+                            Console.WriteLine("\t" + newRule.A + " ->  epsilon");
+                        }
                     }
                 }
             }
@@ -165,6 +186,14 @@ namespace CompilerLib.SyntaxAnalyzer
             char[] charArray = s.ToCharArray();
             Array.Reverse(charArray);
             return new string(charArray);
+        }
+
+        public void OutputProductionRules()
+        {
+            foreach(var rule in ProductionRules)
+            {
+                Console.WriteLine(rule.A + " -> " + rule.B);
+            }
         }
     }
 

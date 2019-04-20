@@ -22,10 +22,12 @@ namespace Compiler
              */
             //Release path
             //string text = System.IO.File.ReadAllText("input.txt");
-            var Lexer = new LexicalAnalyzer(text);
 
             var SAnalyzer = new SyntaxAnalyzer();
-            var test = SAnalyzer.Parse(Lexer.GetRecords());
+            Console.WriteLine("Production Rules:"); 
+            SAnalyzer.OutputProductionRules();
+            Console.WriteLine("\nParsing...");
+            Console.WriteLine('\n' + (SAnalyzer.Parse(text) ? "The input is valid" : "The input failed the syntax analysis"));
 
             Console.WriteLine("Enter any key to end program.");
             Console.ReadKey();
