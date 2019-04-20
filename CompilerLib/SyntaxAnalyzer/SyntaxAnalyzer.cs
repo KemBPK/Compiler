@@ -192,7 +192,7 @@ namespace CompilerLib.SyntaxAnalyzer
         {
             foreach(var rule in ProductionRules)
             {
-                Console.WriteLine(rule.A + " -> " + rule.B);
+                Console.WriteLine(rule.A + " -> " + ( rule.IsEpsilon? "epsilon" : rule.B));
             }
         }
     }
