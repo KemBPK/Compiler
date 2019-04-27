@@ -25,18 +25,27 @@ namespace CompilerLib.SyntaxAnalyzer
 
             ProductionRules = new List<ProductionRule>();
             ProductionRules.Add(new ProductionRule { A = 'E', B = "Te" });
-            ProductionRules.Add(new ProductionRule { A = 'e', B = "STe" });
+            
+            ProductionRules.Add(new ProductionRule { A = 'e', B = "+Te" });
+            ProductionRules.Add(new ProductionRule { A = 'e', B = "-Te" });
             ProductionRules.Add(new ProductionRule { A = 'e', IsEpsilon = true });
-            ProductionRules.Add(new ProductionRule { A = 'S', B = "+" });
-            ProductionRules.Add(new ProductionRule { A = 'S', B = "-" });
+           
             ProductionRules.Add(new ProductionRule { A = 'T', B = "Ft" });
-            ProductionRules.Add(new ProductionRule { A = 't', B = "QFt" });
+
+            ProductionRules.Add(new ProductionRule { A = 't', B = "*Ft" });
+            ProductionRules.Add(new ProductionRule { A = 't', B = "/Ft" });    
             ProductionRules.Add(new ProductionRule { A = 't', IsEpsilon = true });
-            ProductionRules.Add(new ProductionRule { A = 'Q', B = "*" });
-            ProductionRules.Add(new ProductionRule { A = 'Q', B = "/" });
+            
             ProductionRules.Add(new ProductionRule { A = 'F', B = "(E)" });
             ProductionRules.Add(new ProductionRule { A = 'F', B = "i" });
 
+            //ProductionRules.Add(new ProductionRule { A = 'e', B = "STe" });
+            //ProductionRules.Add(new ProductionRule { A = 'S', B = "+" });
+            //ProductionRules.Add(new ProductionRule { A = 'S', B = "-" });
+
+            //ProductionRules.Add(new ProductionRule { A = 't', B = "QFt" });
+            //ProductionRules.Add(new ProductionRule { A = 'Q', B = "*" });
+            //ProductionRules.Add(new ProductionRule { A = 'Q', B = "/" });
 
             //Table = new ProductionRule[7, 8]
             //{
@@ -50,15 +59,13 @@ namespace CompilerLib.SyntaxAnalyzer
 
             //};
 
-            Table = new ProductionRule[7, 8]
+            Table = new ProductionRule[5, 8]
             {
                 { ProductionRules[0], null, null, null, null, ProductionRules[0], null, null  },
-                { null, ProductionRules[1], ProductionRules[1], null, null, null, ProductionRules[2], ProductionRules[2]  },
-                { null, ProductionRules[3], ProductionRules[4], null, null, null, null, null  },
-                { ProductionRules[5], null, null, null, null, ProductionRules[5], null, null  },
-                { null, ProductionRules[7], ProductionRules[7], ProductionRules[6], ProductionRules[6], null, ProductionRules[7], ProductionRules[7]  },
-                { null, null, null, ProductionRules[8], ProductionRules[9], null, null, null  },
-                { ProductionRules[11], null, null, null, null, ProductionRules[10], null, null  }
+                { null, ProductionRules[1], ProductionRules[2], null, null, null, ProductionRules[3], ProductionRules[3]  },
+                { ProductionRules[4], null, null, null, null, ProductionRules[4], null, null  },
+                { null, ProductionRules[7], ProductionRules[7], ProductionRules[5], ProductionRules[6], null, ProductionRules[7], ProductionRules[7]  },
+                { ProductionRules[9], null, null, null, null, ProductionRules[8], null, null  }
 
             };
 
@@ -76,15 +83,17 @@ namespace CompilerLib.SyntaxAnalyzer
             AlphaRows = new List<AlphaRow>();
             AlphaRows.Add(new AlphaRow { Index = 0, A = 'E' });
             AlphaRows.Add(new AlphaRow { Index = 1, A = 'e' });
-            AlphaRows.Add(new AlphaRow { Index = 2, A = 'S' });
-            AlphaRows.Add(new AlphaRow { Index = 3, A = 'T' });
-            AlphaRows.Add(new AlphaRow { Index = 4, A = 't' });
-            AlphaRows.Add(new AlphaRow { Index = 5, A = 'Q' });
-            AlphaRows.Add(new AlphaRow { Index = 6, A = 'F' });
+            AlphaRows.Add(new AlphaRow { Index = 2, A = 'T' });
+            AlphaRows.Add(new AlphaRow { Index = 3, A = 't' });
+            AlphaRows.Add(new AlphaRow { Index = 4, A = 'F' });
+            //AlphaRows.Add(new AlphaRow { Index = 2, A = 'S' });
+            //AlphaRows.Add(new AlphaRow { Index = 3, A = 'T' });
+            //AlphaRows.Add(new AlphaRow { Index = 4, A = 't' });
+            //AlphaRows.Add(new AlphaRow { Index = 5, A = 'Q' });
+            //AlphaRows.Add(new AlphaRow { Index = 6, A = 'F' });
 
         }
 
-        //change to string and then use Lexer to get record
         public bool Parse(string str)
         {
             var Lexer = new LexicalAnalyzer.LexicalAnalyzer(str);
@@ -125,7 +134,12 @@ namespace CompilerLib.SyntaxAnalyzer
                     }
                     else
                     {
-                        
+
+                        if (IsTerminal(Stack.Peek()))
+                        {
+                            Console.WriteLine("ERROR: Expected character " + Stack.Peek());              
+                            return false;
+                        }
                         ProductionRule newRule = FindCell(Stack.Peek(), input);                       
                         if (newRule == null)
                         {
@@ -179,6 +193,11 @@ namespace CompilerLib.SyntaxAnalyzer
         public bool IsNonTerminal(char A)
         {
             return AlphaRows.Any(m => m.A.Equals(A));
+        }
+
+        public bool IsTerminal(char A)
+        {
+            return InputColumns.Any(m => m.Input.Equals(A));
         }
 
         public static string Reverse(string s)
