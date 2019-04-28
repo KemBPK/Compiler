@@ -214,6 +214,19 @@ namespace CompilerLib.LexicalAnalyzer
             return Records;
         }
 
+        public bool IsFirstIdentifier(int i)
+        {
+            if (i == 0) return true;
+
+            if (Records[i - 1].Lexeme.Equals(";", StringComparison.OrdinalIgnoreCase)){
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         private string Input { get; set; }
 
         private readonly List<Record> Records;
