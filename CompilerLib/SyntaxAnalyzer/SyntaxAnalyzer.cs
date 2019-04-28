@@ -24,19 +24,33 @@ namespace CompilerLib.SyntaxAnalyzer
             Stack = new Stack<char>();
 
             ProductionRules = new List<ProductionRule>();
-            ProductionRules.Add(new ProductionRule { A = 'E', B = "Te" });
-            ProductionRules.Add(new ProductionRule { A = 'e', B = "STe" });
-            ProductionRules.Add(new ProductionRule { A = 'e', IsEpsilon = true });
-            ProductionRules.Add(new ProductionRule { A = 'S', B = "+" });
-            ProductionRules.Add(new ProductionRule { A = 'S', B = "-" });
-            ProductionRules.Add(new ProductionRule { A = 'T', B = "Ft" });
-            ProductionRules.Add(new ProductionRule { A = 't', B = "QFt" });
-            ProductionRules.Add(new ProductionRule { A = 't', IsEpsilon = true });
-            ProductionRules.Add(new ProductionRule { A = 'Q', B = "*" });
-            ProductionRules.Add(new ProductionRule { A = 'Q', B = "/" });
-            ProductionRules.Add(new ProductionRule { A = 'F', B = "(E)" });
-            ProductionRules.Add(new ProductionRule { A = 'F', B = "i" });
+            ProductionRules.Add(new ProductionRule { A = 'E', B = "TQ" });
+            
+            ProductionRules.Add(new ProductionRule { A = 'Q', B = "+TQ" });
+            ProductionRules.Add(new ProductionRule { A = 'Q', B = "-TQ" });
+            ProductionRules.Add(new ProductionRule { A = 'Q', IsEpsilon = true });
+           
+            ProductionRules.Add(new ProductionRule { A = 'T', B = "FR" });
 
+            ProductionRules.Add(new ProductionRule { A = 'R', B = "*FR" });
+            ProductionRules.Add(new ProductionRule { A = 'R', B = "/FR" });    
+            ProductionRules.Add(new ProductionRule { A = 'R', IsEpsilon = true });
+            
+            ProductionRules.Add(new ProductionRule { A = 'F', B = "(E)Z" });
+            ProductionRules.Add(new ProductionRule { A = 'F', B = "iZ" });
+
+            ProductionRules.Add(new ProductionRule { A = 'Z', B = ";" });
+            ProductionRules.Add(new ProductionRule { A = 'Z', IsEpsilon = true });
+
+            ProductionRules.Add(new ProductionRule { A = 'S', B = "i=E" });
+
+            //ProductionRules.Add(new ProductionRule { A = 'e', B = "STe" });
+            //ProductionRules.Add(new ProductionRule { A = 'S', B = "+" });
+            //ProductionRules.Add(new ProductionRule { A = 'S', B = "-" });
+
+            //ProductionRules.Add(new ProductionRule { A = 't', B = "QFt" });
+            //ProductionRules.Add(new ProductionRule { A = 'Q', B = "*" });
+            //ProductionRules.Add(new ProductionRule { A = 'Q', B = "/" });
 
             //Table = new ProductionRule[7, 8]
             //{
@@ -50,16 +64,14 @@ namespace CompilerLib.SyntaxAnalyzer
 
             //};
 
-            Table = new ProductionRule[7, 8]
+            Table = new ProductionRule[6, 9]
             {
-                { ProductionRules[0], null, null, null, null, ProductionRules[0], null, null  },
-                { null, ProductionRules[1], ProductionRules[1], null, null, null, ProductionRules[2], ProductionRules[2]  },
-                { null, ProductionRules[3], ProductionRules[4], null, null, null, null, null  },
-                { ProductionRules[5], null, null, null, null, ProductionRules[5], null, null  },
-                { null, ProductionRules[7], ProductionRules[7], ProductionRules[6], ProductionRules[6], null, ProductionRules[7], ProductionRules[7]  },
-                { null, null, null, ProductionRules[8], ProductionRules[9], null, null, null  },
-                { ProductionRules[11], null, null, null, null, ProductionRules[10], null, null  }
-
+                { ProductionRules[0], null, null, null, null, ProductionRules[0], null, null, null  },
+                { null, ProductionRules[1], ProductionRules[2], null, null, null, ProductionRules[3], ProductionRules[3], null },
+                { ProductionRules[4], null, null, null, null, ProductionRules[4], null, null , null },
+                { null, ProductionRules[7], ProductionRules[7], ProductionRules[5], ProductionRules[6], null, ProductionRules[7], ProductionRules[7], null  },
+                { ProductionRules[9], null, null, null, null, ProductionRules[8], null, null, null  },
+                { null, ProductionRules[11], ProductionRules[11], ProductionRules[11], ProductionRules[11], null, ProductionRules[11], ProductionRules[11], ProductionRules[10]  }
             };
 
           
@@ -72,19 +84,24 @@ namespace CompilerLib.SyntaxAnalyzer
             InputColumns.Add(new InputColumn { Index = 5, Input = '(' });
             InputColumns.Add(new InputColumn { Index = 6, Input = ')' });
             InputColumns.Add(new InputColumn { Index = 7, Input = '$' });
+            InputColumns.Add(new InputColumn { Index = 8, Input = ';' });
+            InputColumns.Add(new InputColumn { Index = 9, Input = '=' });
 
             AlphaRows = new List<AlphaRow>();
             AlphaRows.Add(new AlphaRow { Index = 0, A = 'E' });
-            AlphaRows.Add(new AlphaRow { Index = 1, A = 'e' });
-            AlphaRows.Add(new AlphaRow { Index = 2, A = 'S' });
-            AlphaRows.Add(new AlphaRow { Index = 3, A = 'T' });
-            AlphaRows.Add(new AlphaRow { Index = 4, A = 't' });
-            AlphaRows.Add(new AlphaRow { Index = 5, A = 'Q' });
-            AlphaRows.Add(new AlphaRow { Index = 6, A = 'F' });
+            AlphaRows.Add(new AlphaRow { Index = 1, A = 'Q' });
+            AlphaRows.Add(new AlphaRow { Index = 2, A = 'T' });
+            AlphaRows.Add(new AlphaRow { Index = 3, A = 'R' });
+            AlphaRows.Add(new AlphaRow { Index = 4, A = 'F' });
+            AlphaRows.Add(new AlphaRow { Index = 5, A = 'Z' });
+            //AlphaRows.Add(new AlphaRow { Index = 2, A = 'S' });
+            //AlphaRows.Add(new AlphaRow { Index = 3, A = 'T' });
+            //AlphaRows.Add(new AlphaRow { Index = 4, A = 't' });
+            //AlphaRows.Add(new AlphaRow { Index = 5, A = 'Q' });
+            //AlphaRows.Add(new AlphaRow { Index = 6, A = 'F' });
 
         }
 
-        //change to string and then use Lexer to get record
         public bool Parse(string str)
         {
             var Lexer = new LexicalAnalyzer.LexicalAnalyzer(str);
@@ -96,9 +113,11 @@ namespace CompilerLib.SyntaxAnalyzer
 
             Records.Add(new Record { Token = Token.separator, Lexeme = "$" });
 
-            foreach(Record r in Records)
+
+            for(int i=0;i<Records.Count();++i)
+            //foreach(Record r in Records)
             {
-                Console.WriteLine("Token: " + r.Token + "\t" + "Lexeme: " + r.Lexeme);
+                Console.WriteLine("Token: " + Records[i].Token + "\t" + "Lexeme: " + Records[i].Lexeme);
                 while (true)
                 {
                     //Compare r.lexeme (unless it the token is an identifier) with top of stack
@@ -107,13 +126,13 @@ namespace CompilerLib.SyntaxAnalyzer
                     //Find r.lexeme in row of Stack.Pop. Pop Top and Push the production rule backward.
                     
                     char input;
-                    if (r.Token == Token.identifier)
+                    if (Records[i].Token == Token.identifier)
                     {
                         input = 'i'; //special case
                     }
                     else
                     {
-                        input = r.Lexeme[0];
+                        input = Records[i].Lexeme[0];
                     }
 
                     bool match = Stack.Peek().Equals(input);
@@ -125,17 +144,40 @@ namespace CompilerLib.SyntaxAnalyzer
                     }
                     else
                     {
+
+                        if (IsTerminal(Stack.Peek()))
+                        {
+                            Console.WriteLine("ERROR: Expected character " + Stack.Peek());              
+                            return false;
+                        }
+                        ProductionRule newRule = null;
+                        if (input.Equals('i') && (i+1) < Records.Count())
+                        {
+
+                            if (Lexer.IsFirstIdentifier(i) && Records[i+1].Lexeme.Equals("=", StringComparison.OrdinalIgnoreCase))
+                            {
+                                newRule = ProductionRules[12];
+                            }
+                            else
+                            {
+                                newRule = FindCell(Stack.Peek(), input);
+                            }
+                            
+                        }
+                        else
+                        {
+                            newRule = FindCell(Stack.Peek(), input);
+                        }
                         
-                        ProductionRule newRule = FindCell(Stack.Peek(), input);                       
                         if (newRule == null)
                         {
-                            if (r.Lexeme[0].Equals('$'))
+                            if (Records[i].Lexeme[0].Equals('$'))
                             {
                                 Console.WriteLine("ERROR: incomplete syntax");
                             }
                             else
                             {
-                                Console.WriteLine("ERROR: at character " + r.Lexeme);
+                                Console.WriteLine("ERROR: at character " + Records[i].Lexeme);
                             }
                             
                             return false; //error
@@ -179,6 +221,11 @@ namespace CompilerLib.SyntaxAnalyzer
         public bool IsNonTerminal(char A)
         {
             return AlphaRows.Any(m => m.A.Equals(A));
+        }
+
+        public bool IsTerminal(char A)
+        {
+            return InputColumns.Any(m => m.Input.Equals(A));
         }
 
         public static string Reverse(string s)
