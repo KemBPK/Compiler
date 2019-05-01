@@ -92,6 +92,12 @@ namespace CompilerLib.SyntaxAnalyzer
 
             List<Record> Records = Lexer.GetRecords();
 
+            bool semicolon = true;
+            if(!Records[Records.Count() - 1].Lexeme.Equals(";", StringComparison.OrdinalIgnoreCase))
+            {            
+                semicolon = false;
+            }
+
             Stack.Push('$');
             Stack.Push(ProductionRules[0].A);
 
@@ -112,7 +118,7 @@ namespace CompilerLib.SyntaxAnalyzer
                     char input;
                     if (Records[i].Token == Token.identifier)
                     {
-                        input = 'i'; //special case
+                        input = 'i'; //special case to compare with the table symbols
                     }
                     else
                     {
@@ -123,13 +129,13 @@ namespace CompilerLib.SyntaxAnalyzer
 
                     if (match)
                     {
-                        Stack.Pop();
+                        Stack.Pop(); //Pops stack if top of stack equals the current character
                         break;
                     }
                     else
                     {
 
-                        if (IsTerminal(Stack.Peek()))
+                        if (IsTerminal(Stack.Peek())) //At this stage of the analysis, a terminal sybmol should not be at the top of the stack
                         {
                             Console.WriteLine("ERROR: Expected character " + Stack.Peek());              
                             return false;
@@ -140,7 +146,7 @@ namespace CompilerLib.SyntaxAnalyzer
 
                             if (Lexer.IsFirstIdentifier(i) && Records[i+1].Lexeme.Equals("=", StringComparison.OrdinalIgnoreCase))
                             {
-                                newRule = ProductionRules[12];
+                                newRule = ProductionRules[12]; //assigns the special production rule for the assignment operator
                             }
                             else
                             {
@@ -167,7 +173,7 @@ namespace CompilerLib.SyntaxAnalyzer
                             return false; //error
                         }
                         
-                        Stack.Pop();
+                        Stack.Pop(); //pops stack and push in new rule (backward)
                         if (!newRule.IsEpsilon)
                         {
                             Console.WriteLine("\t" + newRule.A + " -> " + newRule.B);
@@ -184,6 +190,12 @@ namespace CompilerLib.SyntaxAnalyzer
                     }
                 }
             }
+            if (!semicolon)
+            {
+                Console.WriteLine("ERROR: Expected character ;");
+                return false;
+            }
+
             return Stack.Count() == 0;
         }
 

@@ -15,13 +15,13 @@ namespace Compiler
         {
             //var path = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory.ToString(), "input.txt");
             //Debugging path
-            string text = System.IO.File.ReadAllText("~\\..\\..\\..\\..\\input.txt");
+            //string text = System.IO.File.ReadAllText("~\\..\\..\\..\\..\\input.txt");
             /* 
              * dotnet publish Compiler.sln -c Release -r win10-x64 
              * Go to bin\Release
              */
             //Release path
-            //string text = System.IO.File.ReadAllText("input.txt");
+            string text = System.IO.File.ReadAllText("input.txt");
 
             Console.WriteLine("Input string:\n" + text + "\n\n");
             var SAnalyzer = new SyntaxAnalyzer();
