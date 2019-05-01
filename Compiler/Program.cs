@@ -23,6 +23,7 @@ namespace Compiler
             //Release path
             //string text = System.IO.File.ReadAllText("input.txt");
 
+            Console.WriteLine("Input string:\n" + text + "\n\n");
             var SAnalyzer = new SyntaxAnalyzer();
             Console.WriteLine("Production Rules:"); 
             SAnalyzer.OutputProductionRules();

@@ -1,4 +1,8 @@
-﻿using CompilerLib.LexicalAnalyzer;
+﻿// Brandon Kem
+// CPSC 323
+// MW 1:00 PM - 2:15 PM
+
+using CompilerLib.LexicalAnalyzer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,26 +48,6 @@ namespace CompilerLib.SyntaxAnalyzer
 
             ProductionRules.Add(new ProductionRule { A = 'S', B = "i=E" });
 
-            //ProductionRules.Add(new ProductionRule { A = 'e', B = "STe" });
-            //ProductionRules.Add(new ProductionRule { A = 'S', B = "+" });
-            //ProductionRules.Add(new ProductionRule { A = 'S', B = "-" });
-
-            //ProductionRules.Add(new ProductionRule { A = 't', B = "QFt" });
-            //ProductionRules.Add(new ProductionRule { A = 'Q', B = "*" });
-            //ProductionRules.Add(new ProductionRule { A = 'Q', B = "/" });
-
-            //Table = new ProductionRule[7, 8]
-            //{
-            //    { new ProductionRule { A = 'E', B = "Te" }, null, null, null, null, new ProductionRule { A = 'E', B = "Te" }, null, null  },
-            //    { null, new ProductionRule { A = 'e', B = "STe" }, new ProductionRule { A = 'e', B = "STe" }, null, null, null, new ProductionRule { IsEpsilon = true}, new ProductionRule { IsEpsilon = true}  },
-            //    { null, new ProductionRule { A = 'S', B = "+" }, new ProductionRule { A = 'S', B = "-" }, null, null, null, null, null  },
-            //    { new ProductionRule { A = 'T', B = "Ft" }, null, null, null, null, new ProductionRule { A = 'T', B = "Ft" }, null, null  },
-            //    { null, new ProductionRule { IsEpsilon = true}, new ProductionRule { IsEpsilon = true}, new ProductionRule { A = 't', B = "QFt" }, new ProductionRule { A = 't', B = "QFt" }, null, new ProductionRule { IsEpsilon = true}, new ProductionRule { IsEpsilon = true}  },
-            //    { null, null, null, new ProductionRule { A = 'Q', B = "*" }, new ProductionRule { A = 'Q', B = "/" }, null, null, null  },
-            //    { new ProductionRule { A = 'F', B = "i" }, null, null, null, null, new ProductionRule { A = 'F', B = "(E)" }, null, null  }
-
-            //};
-
             Table = new ProductionRule[6, 9]
             {
                 { ProductionRules[0], null, null, null, null, ProductionRules[0], null, null, null  },
@@ -94,14 +78,14 @@ namespace CompilerLib.SyntaxAnalyzer
             AlphaRows.Add(new AlphaRow { Index = 3, A = 'R' });
             AlphaRows.Add(new AlphaRow { Index = 4, A = 'F' });
             AlphaRows.Add(new AlphaRow { Index = 5, A = 'Z' });
-            //AlphaRows.Add(new AlphaRow { Index = 2, A = 'S' });
-            //AlphaRows.Add(new AlphaRow { Index = 3, A = 'T' });
-            //AlphaRows.Add(new AlphaRow { Index = 4, A = 't' });
-            //AlphaRows.Add(new AlphaRow { Index = 5, A = 'Q' });
-            //AlphaRows.Add(new AlphaRow { Index = 6, A = 'F' });
 
         }
 
+        /*
+         * Parse:
+         *                  Checks if string has a valid syntax
+         * 
+         */
         public bool Parse(string str)
         {
             var Lexer = new LexicalAnalyzer.LexicalAnalyzer(str);
@@ -203,31 +187,61 @@ namespace CompilerLib.SyntaxAnalyzer
             return Stack.Count() == 0;
         }
 
+        /*
+         * GetColIndex:
+         *                  Gets column index for the character input (for the table)
+         * 
+         */
         public int GetColIndex(char Input)
         {
             return InputColumns.FirstOrDefault(m => m.Input.Equals(Input)).Index;
         }
 
+        /*
+         * GetRowIndex:
+         *                  Gets row index for the symbol input (for the table)
+         * 
+         */
         public int GetRowIndex(char A)
         {
             return AlphaRows.FirstOrDefault(m => m.A.Equals(A)).Index;
         }
 
+        /*
+         * FindCell:
+         *                  returns the production rule within the table cell
+         * 
+         */
         public ProductionRule FindCell(char A, char Input)
         {
             return Table[GetRowIndex(A), GetColIndex(Input)];
         }
 
+        /*
+         * IsNonTerminal:
+         *                  Checks if the input symbol is non-terminal
+         * 
+         */
         public bool IsNonTerminal(char A)
         {
             return AlphaRows.Any(m => m.A.Equals(A));
         }
 
+        /*
+         * IsTerminal:
+         *                  Checks if the input symbol is terminal
+         * 
+         */
         public bool IsTerminal(char A)
         {
             return InputColumns.Any(m => m.Input.Equals(A));
         }
 
+        /*
+         * Reverse:
+         *                  Returns the reverse of a string
+         * 
+         */
         public static string Reverse(string s)
         {
             char[] charArray = s.ToCharArray();
@@ -235,6 +249,11 @@ namespace CompilerLib.SyntaxAnalyzer
             return new string(charArray);
         }
 
+        /*
+         * OutputProductionRules:
+         *                  Outputs the production rules
+         * 
+         */
         public void OutputProductionRules()
         {
             foreach(var rule in ProductionRules)
