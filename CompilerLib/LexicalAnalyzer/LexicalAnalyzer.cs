@@ -166,6 +166,11 @@ namespace CompilerLib.LexicalAnalyzer
 
         }
 
+        /*
+         * GetClosingCommentIndex:
+         *                  Gets next index of closing comment
+         * 
+         */
         private int GetClosingCommentIndex(int openingCommentIndex)
         {
             int ClosingCommentIndex = Input.IndexOf('!', openingCommentIndex + 1);
@@ -209,11 +214,21 @@ namespace CompilerLib.LexicalAnalyzer
                    s.Equals("or") || s.Equals("function");
         }
 
+        /*
+         * GetRecords:
+         *                  Gets list of records
+         * 
+         */
         public List<Record> GetRecords()
         {
             return Records;
         }
 
+        /*
+         * IsFirstIdentifier:
+         *                  Checks if the identifier is the first one after a semicolon
+         * 
+         */
         public bool IsFirstIdentifier(int i)
         {
             if (i == 0) return true;
